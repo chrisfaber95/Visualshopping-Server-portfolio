@@ -30,18 +30,15 @@ module.exports = (req, res) => {
 						"success": true
 					});
 				})*/
-				console.log(result)
 			})
 		});
 
 		res.status(200).send("uploaded") 
 			// accessing the file
 		//const myFile = req.files;
-		console.log(req.files)
 		//  mv() method places the file inside public directory
 		//myFile.mv(`${__dirname}/public/sales/${myFile.name}`, function (err) {
 		//	if (err) {
-		//		console.log(err)
 		//		return res.status(500).send({ msg: "Error occured" });
 		//	}
 		//	// returing the response with file path and name
@@ -49,7 +46,6 @@ module.exports = (req, res) => {
 		//});
     } catch (err) {
         Logger.log(1, err)
-        console.error(err)
     }
 }; 
  

@@ -11,6 +11,8 @@ const post = require('./post');
 const update = require('./update');
 const product = require('./product');
 const count = require('./count');
+const receipt = require('./receipt');
+const test = require('./test');
 
 order.get('/', all);
 order.get('/:date', all);
@@ -20,6 +22,8 @@ order.get('/product/:orderId', product)
 order.delete('/:orderId', remove)
 order.post('/', post)
 order.put('/:orderId', update)
+order.get('/receipt/:orderId', receipt)
+order.get('/test/:orderId', test)
 
 
 module.exports = order;

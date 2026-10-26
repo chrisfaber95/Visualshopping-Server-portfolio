@@ -1,7 +1,6 @@
 const db = require('../../config/connection');
 
 module.exports = (req, res) => {
-   console.log(req)
     var sqlquery = "SELECT * "
     	 sqlquery += "FROM `Userroles` "
 

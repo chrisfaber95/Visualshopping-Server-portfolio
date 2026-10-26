@@ -1,15 +1,23 @@
-const db = require('../../config/connection');
+const {Cookies, Order}= require('../../models/index');
+const { Op } = require("sequelize");
+const Logger = require('../../config/logging.js');
 
 module.exports = (req, res) => {
-    console.log(req)
-    var message = "cookie accepted"
-    var sqlquery = ` INSERT INTO Cookies 
-			(device, acceptance_date, user_auth, cookie_type, ip) 
-			VALUES (${db.connection.escape(req.headers['user-agent'])}, NOW(), ${db.connection.escape(req.headers['authorization'])}, '1', ${db.connection.escape(req.body.ip)});
-		`
-    db.connection.query(sqlquery, function(err, result) {
-        if (err) throw err;
-        const message = result;
-        res.status(200).json({ message })
-    })
+    try {
+        Cookies.create({
+            device: req.headers['user-agent'],
+            user_auth: req.headers['authorization'],
+            cookie_type: '1',
+            ip: req.body.ip,
+            customer_id: req.body.customer_id
+        })
+        .then((cookie) => { 
+            res.status(200).json({ message:  "cookie accepted" })
+        })
+        .catch((error) =>{
+            res.status(200).json({ err: error })
+        })
+    } catch (error) {
+        res.status(200).json({ err: error })
+    }
 };

@@ -1,23 +1,30 @@
-const db = require('../../config/connection');
 const Logger = require('../../config/logging.js')
+const { Op, literal, fn } = require('sequelize');
+const { Order } = require('../../models/index');
 
-module.exports = (req, res) => {
-	try{
-		var sqlquery = "SELECT count('orders') as `ordercount`, o.`pickupTime` "
-			sqlquery += "FROM `Order` as o where o.`pickupDate` like '" + req.params.date + "%' group BY o.`pickupTime`; "
+module.exports = async (req, res) => {
+	const pickupDate = new Date(req.params.date);
+	const startOfDayPickupDate = new Date(pickupDate.getFullYear(), pickupDate.getMonth(), pickupDate.getDate());
 
-			db.connection.query(sqlquery, function (err, result){
-			if(err){
-				Logger.log(1, err)
-			}
-			else{
-				const ordercounter = result;
-				res.status(200).json({ordercounter});
-			}
-		})   
-	}
-	catch(err){
-		Logger.log(1, err)
+	try {
+	  const ordersByPickupTime = await Order.findAll({
+		attributes: [
+		  [fn('TIME', literal('pickupTime')), 'pickupTime'],
+		  [fn('COUNT', '*'), 'orderCount'],
+		],
+		where: {
+		  pickupDate: {
+			[Op.gte]: startOfDayPickupDate,
+			[Op.lt]: new Date(startOfDayPickupDate.getTime() + 24 * 60 * 60 * 1000), // add 1 day to include orders until midnight
+		  },
+		},
+		group: [fn('TIME', literal('pickupTime'))],
+	  });
+  
+	  res.status(200).json(ordersByPickupTime);
+	} catch (err) {
+	  console.error(err);
+	  res.status(500).json({ message: 'Internal server error' });
 	}
 };
 

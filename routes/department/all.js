@@ -1,18 +1,16 @@
-const db = require('../../config/connection');
+const {Department, Product}= require('../../models/index');
+const { Op } = require("sequelize");
+const Logger = require('../../config/logging.js');
 
 module.exports = (req, res) => {
-	if(req.query.dep){    
-		var sqlquery = "SELECT d.* "
-			sqlquery += "FROM `Department` as d WHERE d.mainlabel = '" + req.query.dep + "'; "
-	}
-	else{
-		var sqlquery = "SELECT d.department_id, d.label, d.name, d.slug, d.main_department "
-			sqlquery += "FROM `Department` as d; "
-	}
-		db.connection.query(sqlquery, function (err, result){
-		if(err) throw err;
-		const docs = result;
-        res.status(200).json({docs});
-	})   
+    Department.findAll({      
+        logging: false,
+        where: req.query
+    })
+    .then((department) => {
+        res.status(200).json( department );
+    })
+    .catch((err) =>{        
+        Logger.log(1, err)
+    })
 };
-

@@ -22,15 +22,10 @@ module.exports = (req, res) => {
 			//for(x = 0; x < 10; x++){
 				var url1 = docs[x].url
 				setTimeoutPromise(interval * x, url1).then((value) => {
-					//searchProduct(value);
-					//console.log(x)
-					
 					rp(value)
 						.then(function(html){
 
 							var length = $('.crumbs li a span',html).length;
-					//	console.log($('.crumbs li a span',html)[length -1].children[0].data);			
-							 	
 							var	url2= value
 							var	title= $('.crumbs li a span',html)[length -1].children[0].data
 							var	categoryname1= $('.crumbs li a span',html)[2].children[0].data
@@ -47,7 +42,6 @@ module.exports = (req, res) => {
 							var	schaphoogte= getRandomInt(5)
 							var	schapplaats= getRandomInt(30)
 							
-							//	console.log(title)
 							var slug = ($('.crumbs li a span',html)[2].children[0].data).replace(/\s+/g, '-').toLowerCase() + '/' + ($('.crumbs li a span',html)[3].children[0].data).replace(/\s+/g, '-').toLowerCase();
 
 
@@ -56,10 +50,10 @@ module.exports = (req, res) => {
 								sqlquery += "`datasyndyproductid`, `discountPrice`, `datasyndyfont`, `schaphoogte`, `schapplaats`) "
 								sqlquery += "VALUES('"+ url2 +"',"+ db.connection.escape(title) +", "+ db.connection.escape(categoryname1) +", "+ db.connection.escape(categoryname2) +", '"+ imgurl +"', '"+ itemtype +"', '"+ price +"', "+ db.connection.escape(variant) +", '"+ ean +"', '"+ dataproduct +"', "
 								sqlquery += "'"+ datasyndyproductid +"', 0.00 , '"+ datasyndyfont +"', "+ schaphoogte +", "+ schapplaats +"); "
-						//	console.log(sqlquery);
+						
 								db.connection.query(sqlquery, function (err, result){
 								if(err) throw err;
-							//	console.log(result);
+							
 								const message = "Done ripping from website"
 							})  
 						})		
@@ -75,25 +69,21 @@ module.exports = (req, res) => {
 	/*	rp(url)
 		  .then(function(html){
 			//success!
-			//console.log($('.main .categoryItem > a ', html).length);
+			
 			var catSize = $('.main .categoryItem > a ', html).length;
 			for (let i = 0; i < catSize; i++) {
 		//	for (let i = 0; i < 2; i++) {
-				console.log($('.main .categoryItem > a ', html)[i].attribs.href);
+				
 
 				rp($('.main .categoryItem > a ', html)[i].attribs.href)
 				  .then(function(html){
 					//success!
-					//console.log($('.pagination__listItem > a', html).length);
-					//console.log($('.pagination__listItem > a', html)[1].attribs.href);
 					var catHref = ($('.pagination__listItem > a', html)[1].attribs.href).replace(re, "PageSize=1700");
-					console.log(catHref);
+					
 						rp(catHref)
 						.then(function(html){
 							//success!
-							console.log($('article header h2', html).length);
 							const catlength = $('article header h2', html).length;
-							//console.log($('article header h2', html)[3]);
 							//for(let j = 0; j < $('article header h2', html).length; j++){
 							for(let j = 0; j < catlength; j++){
 									setTimeout( function (i) {
@@ -104,7 +94,6 @@ module.exports = (req, res) => {
 											}
 
 										productlinks.insert(doc, function (err, newDoc) { 	// Callback is optional
-										//	console.log(	doc );
 										});
 									}, interval * i * j, i * j);
 								}
@@ -135,7 +124,6 @@ module.exports = (req, res) => {
 	
 		db.connection.query(sqlquery, function (err, result){
 		if(err) throw err;
-		console.log(result);
 		const message = result;*/
 	//	const message = "Done ripping from website"
      //   res.status(200).json({message});
@@ -148,7 +136,6 @@ router.get('/api/coopextra', (req, res) => {
 		productlinks.find({}, function (err, docs){
 			//for(x = 0; x < docs.length; x++){				
 			for(x = 0; x < 1700; x++){
-				//console.log(docs[x].url);
 				searchProduct(docs[x].url);
 			}
 		});
@@ -163,8 +150,7 @@ const  searchProduct  = (url, cb) => {
 	rp(url)
 		.then(function(html){
 				
-			var length = $('.crumbs li a span',html).length;
-		//	console.log($('.crumbs li a span',html)[length -1].children[0].data);			
+			var length = $('.crumbs li a span',html).length;		
 			const doc = { 	
 				url: url,
 				title: $('.crumbs li a span',html)[length -1].children[0].data,
@@ -193,15 +179,13 @@ const  searchProduct  = (url, cb) => {
 						sec_label: ($('.crumbs li a span',html)[3].children[0].data),
 						slug: slug
 					}
-					console.log(doc1);
 					coopdepartmentsdb.insert(doc1, function (err, newDoc) { 	// Callback is optional
 					});
 				}
 			})
 			coopproductdb.insert(doc, function (err, newDoc) { 	// Callback is optional
-				console.log(url );
+				
 			});
-	//		console.log($('#main > section', html));
 		})		
 	  .catch(function(err){
 		//handle error
@@ -218,8 +202,7 @@ function searchProduct (url){
 	rp(url)
 		.then(function(html){
 				
-			var length = $('.crumbs li a span',html).length;
-		//	console.log($('.crumbs li a span',html)[length -1].children[0].data);			
+			var length = $('.crumbs li a span',html).length;		
 			const doc = { 	
 				url: url,
 				title: he.encode($('.crumbs li a span',html)[length -1].children[0].data),

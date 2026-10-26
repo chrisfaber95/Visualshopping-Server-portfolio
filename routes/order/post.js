@@ -1,215 +1,165 @@
-const db = require('../../config/connection');
-const nodemailer = require("nodemailer");
-const QRCode = require("qrcode");
-
+const {Order, OrderHasProduct, Product, Productinformation, Customer, OrderInformation}= require('../../models/index');
+const { Op, Sequelize } = require("sequelize");
+const Logger = require('../../config/logging.js');
 require('dotenv').config();
 
 const { createMollieClient } = require('@mollie/api-client');
 const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API });
 
-	
-	
-	function sendOrderMail(orderInfo, qrcode){
-			qrcode = qrcode.replace('data:image/png;base64,', '')
-			const cooplogo = "https://www.coop.nl/INTERSHOP/static/WFS/COOP-COOPBase-Site/-/COOP/nl_NL/logo's/COOP_logo_RGB_pay-off.png"
-			var html = '<div style="width: 80%"><table>'
-				html += '<tr style="width: 100%; background-color: orange;"><td style="width:30%;"><img style="width: 100%;" src="'+ cooplogo +'" /></td><td style="width:70%;"><h1 style="color: white">Orderbevestiging</h1></td></tr>'
-				html += '<tr style="width: 100%;"><td style="width:30%;"></td><td style="width: 40%;"><img style="border-color: red; width: 99%; background-color: red;" src="cid:qrcode@cooplubbers.nl" /></td><td style="width:30%;"></td></tr>'
-				html += '<tr style="width: 100%;"><td style="width:30%;"></td><td style="width: 40%;"><p>Bedrag: '+ orderInfo.price +'</p></td><td style="width:30%;"></td></tr>'
-				html += '</table></div>'
-		  // Generate test SMTP service account from ethereal.email
-		  // Only needed if you don't have a real mail account for testing
-		 // let testAccount = await nodemailer.createTestAccount();
-
-		  // create reusable transporter object using the default SMTP transport
-		  let transporter = nodemailer.createTransport({
-			  service: 'gmail',
-			  auth: {
-				user: process.env.MAIL_USER,
-				pass: process.env.MAIL_PASS
-			  }
-		});
-		
-		/*let transporter = nodemailer.createTransport({
-			  host: "smtp.hostnet.nl",
-			  port: 587,
-			  secure: false, // upgrade later with STARTTLS
-			  auth: {
-				user: "Bestellingen@cooplubbers.nl",
-				pass: "password"
-			  }
-			});*/
-			
-		  let mailOptions = {
-			from: '"Coop Lubber Bestellingen" bestellingen@cooplubbers.nl', // sender address
-			to: orderInfo.email, // list of receivers
-			subject: "Bestelling bij Coop", // Subject line
-			text: "Uw bestelling bij Coop Lubbers", // plain text body
-			html: html,  // html body
-			 attachments: [
-            // Binary Buffer attachment
-				{
-					filename: 'image.png',
-					content: Buffer.from(
-						qrcode,
-						'base64'
-					),
-
-					cid: 'qrcode@cooplubbers.nl' // should be as unique as possible
-				}
-			],
-
-		  };
-		
-			transporter.sendMail(mailOptions, function(error, info){
-				  if (error) {
-					console.log(error);
-				  } else {
-					console.log('Email sent: ' + info.response);
-				  }
-			});
-		}	
-
-function parseCartJSON(json){
-	let parsed = new Map (JSON.parse(json));
-	return parsed
+async function getInvoiceNumber() {
+	// Generate a default invoice number using the current date/time and order number
+	const now = new Date();
+	console.log(this)
+	const id = this.id;
+	const ordersToday = await Order.count({ where: { createdAt: { [Sequelize.Op.gte]: startOfDay(now) } }});
+	const orderNumber = ordersToday + 1;
+	let number = generateInvoiceNumber('3555', this.orderType, now, orderNumber).toString();
+	console.log(number)
+	return number;
 }
+
+function startOfDay(date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+  
+  // Helper function to generate an invoice number based on the provided parameters
+  function generateInvoiceNumber(storeNumber, orderType, date, orderNumber) {
+    const prefix = orderType === 1 ? 'A' : 'B';
+    const timestamp = `${date.getFullYear()}${date.getMonth()}${date.getDate()}`
+    console.log(`NL${storeNumber}_${timestamp}_${padNumber(orderNumber)}`)
+    return `NL${storeNumber}_${timestamp}_${padNumber(orderNumber)}`.toString();
+  }
+
+  function padNumber(number) {
+    // Pad a number with a leading zero if it's less than 10
+    if (number < 10) {
+      return "000" + number;
+    } 
+    if (number < 100) {
+        return "00" + number;
+    }
+    if (number < 1000) {
+        return "0" + number;
+    }  else {
+      return number;
+    }
+  }
+
 module.exports = (req, res) => {
-	if(req.body.cart == null ||
-		req.body.email == null ||
-		req.body.credentials.name == null ||
-		req.body.credentials.telefoon == null ||
-		req.body.pickupDate == null ||
-		req.body.pickupTime.mm == null ||
-		req.body.pickupTime.HH == null
-	){
-		res.status(200).send({ 
-			"docs":  error,
-			"success": false 
-		});
-	}
-	else{
-        if(req.body.selectedBetaal != "contant"){
-			try{
-				mollieClient.payments.create({
-					amount: {
-						value:    req.body.orderprice,
-						currency: 'EUR'
-					},
-					description: 'Uw bestelling bij Coop Lubbers',
-					redirectUrl: req.get('origin'),
-					webhookUrl:  process.env.MOLLIE_WEBHOOK,
-					method: req.body.selectedBetaal
+	var userDetails = req.body.userDetails
+	var invoiceDetails = req.body.invoiceDetails
+	var orderDetails = req.body.orderDetails
+	var orderProducts = req.body.orderProducts
+	try{
+		var api = ''
+        if(userDetails.klantenkaart == '6207038699858' || userDetails.klantenkaart == '1000000000001') {
+            api = process.env.MOLLIE_TEST_API}
+        else{  api = process.env.MOLLIE_API}
+const mollieClient = createMollieClient({ apiKey: api });
+		mollieClient.payments.create({
+			amount: {
+				value:    parseFloat(orderDetails.picking_price).toFixed(2),
+				currency: 'EUR'
+			},
+			description: 'Uw bestelling bij Coop Lubbers',
+			redirectUrl: `${req.get('origin')}?return=payment`,
+			webhookUrl:  process.env.MOLLIE_WEBHOOK,
+			method: req.body.selectedBetaal
+		})
+		.then(async (payment) => {
+			let invoice_number = await getInvoiceNumber();
+			Order.create({
+				delivery: orderDetails.delivery,
+				pickupDate: orderDetails.pickupDate,
+				pickupTime: orderDetails.pickupTime,
+				totalPrice: orderDetails.totalPrice,
+				koopzegels: orderDetails.koopzegels,
+				spaarzegels: orderDetails.spaarzegels.toString(),
+				picking_price: orderDetails.picking_price,
+				paymentMethod: payment.id,
+				status: "pending",
+				order_information: {
+					customerName: userDetails.customerName,
+					first_name: userDetails.first_name,
+					surname: userDetails.surname,
+					kvk: userDetails.kvk,
+					business: userDetails.business,
+					customerPhone: userDetails.customerPhone,
+					klantenkaart: userDetails.klantenkaart,
+					customerEmail: userDetails.customerEmail,
+					street: userDetails.address.street,
+					house_number: userDetails.address.house_number,
+					house_addition: userDetails.address.house_addition,
+					zipcode: userDetails.zipcode,
+					city: userDetails.city,
+					country: userDetails.country,
+					customer_id: userDetails.customer_id
+				},
+				invoice_order_information: {
+					customerName: invoiceDetails.customerName,
+					first_name: invoiceDetails.first_name,
+					surname: invoiceDetails.surname,
+					kvk: invoiceDetails.kvk,
+					business: invoiceDetails.business,
+					customerPhone: invoiceDetails.customerPhone,
+					klantenkaart: invoiceDetails.klantenkaart,
+					customerEmail: invoiceDetails.customerEmail,
+					street: invoiceDetails.address.street,
+					house_number: invoiceDetails.address.house_number,
+					house_addition: invoiceDetails.address.house_addition,
+					zipcode: invoiceDetails.zipcode,
+					city: invoiceDetails.city,
+					country: invoiceDetails.country,
+					customer_id: invoiceDetails.customer_id
+				},
+				storepoints: orderDetails.storepoints,
+				invoice_number: invoice_number
+			},{
+				logging: false,
+				include: [{
+					model: OrderInformation,
+					as: 'order_information'
+				}, {
+					model: OrderInformation,
+					as: 'invoice_order_information'
+				},]
+			})
+			.then((order) => {
+                Logger.log(1, JSON.stringify(order) + "||" + JSON.stringify(payment))
+				var products = []
+				for (const [key, value] of Object.entries(orderProducts)) {
+					products.push({
+						amount: value.amount,
+						order_id: order.id,
+						product_id: value.product.id,
+						price: value.product.price					
+					})
+				}
+				OrderHasProduct.bulkCreate(products,{					
+					logging: false
 				})
-				.then(payment => {
-					console.log(req.body)
-					let kzegels = req.body.credentials.koopzegels
-					let spaarzegels = req.body.credentials.spaarzegels
-					let klantenkaart = req.body.credentials.pasnummer
-					var sqlquery = "call addOrder( "
-						sqlquery += req.body.price + ", "
-						sqlquery += db.connection.escape(req.body.cart) + ", "
-						sqlquery += db.connection.escape(req.body.email) + ", '"
-						sqlquery += req.body.selectedBetaal + "-"+ payment.id +"', "
-						sqlquery += db.connection.escape(req.body.credentials.name) + ", "
-						sqlquery += db.connection.escape(req.body.credentials.telefoon) + ", '"
-						sqlquery += req.body.pickupDate + "', '"
-						sqlquery += req.body.pickupTime.HH +":" + req.body.pickupTime.mm +"', '"
-						sqlquery += kzegels + "', '"
-						sqlquery += spaarzegels + "', "
-						sqlquery += db.connection.escape(klantenkaart) + ", "
-						sqlquery += req.body.user_id +', '
-						sqlquery += '@LID);'
-						sqlquery += "select @LID as order_id;"
-						
-				   db.connection.query(sqlquery, function (err, result){
-						if(err) throw err;
-						var cart = JSON.parse(req.body.cart)
-						var sqlquery1 = ""
-						insertId = result[1][0].order_id
-						for (var item in cart) {
-							sqlquery1 += "call addOrderProduct "
-							sqlquery1 += "(" + insertId + ", " + cart[item].product_id + ", '" + parseInt(cart[item].amount) + "', " + cart[item].price + "); "
-							
-						}
-						db.connection.query(sqlquery1, function (err, result){
-							if(err) throw err;
-							const newOrder = result;
-							res.status(200).send({ 
-								"docs":  payment,
-								"order": newOrder,
-								"success": true
-							});
-						})
-					})                   
-				})
-				.catch(error => {
+				.then((orderprods) => {
 					res.status(200).send({ 
-						"docs":  error,
-						"success": false 
+						"payment":  payment._links.checkout.href,
+						"success": true
 					});
-				});	
-			}
-			catch(error){
-				res.status(200).send({ 
+				})
+			})
+			.catch((error) => { 
+				res.status(400).send({ 
 					"docs":  error,
 					"success": false 
 				});
-			}
-        }
-		else{
-            mollieClient.payments.create({
-                amount: {
-                    value: req.body.orderprice,
-                    currency: 'EUR'
-                },
-                description: 'My first API payment',
-                redirectUrl: process.env.BASE_URL,
-                webhookUrl:  process.env.MOLLIE_WEBHOOK
-            })
-            .then(payment => {
-              //  console.log(payment);
-                var sqlquery = "INSERT INTO `cooplubbers`.`Order` (`totalPrice`, `cart`, `customerEmail`, `paymentMethod`, `customerName`, `CustomerPhone`, `pickupDate`, `pickupTime`, `user_id`)"
-                    sqlquery += "VALUES ( "
-                    sqlquery += req.body.price + ", "
-                    sqlquery += db.connection.escape(req.body.cart) + ", "
-                    sqlquery += db.connection.escape(req.body.email) + ", '"
-                    sqlquery += req.body.selectedBetaal + "-"+ payment.id +"', "
-                    sqlquery += db.connection.escape(req.body.credentials.name) + "', "
-                    sqlquery += db.connection.escape(req.body.credentials.telefoon) + ", '"
-                    sqlquery += req.body.pickupDate + "', '"
-                    sqlquery += req.body.pickupTime.HH +":" + req.body.pickupTime.mm +"', "
-                    sqlquery += req.body.user_id
-                    sqlquery += ");"
-
-                db.connection.query(sqlquery, function (err, result){
-                    if(err) throw err;
-                //    console.log(result);
-                    const newOrder = result;
-					
-					QRCode.toDataURL(result.insertedId + '--' + payment.id)
-					.then(url => {
-						console.log(url)			
-					})
-					.catch(err => {
-						console.error(err)
-					})
-					
-					
-					
-                    res.status(200).send({ 
-                        "docs":  payment,
-                        "order": newOrder
-                    });
-                })                   
-            })
-            .catch(error => {
-                res.status(200).send({ 
-                    "docs":  error      
-                });
-            });	
-        }
+                Logger.log(1, error)
+			})
+		})
 	}
+	catch(error){
+		res.status(400).send({ 
+			"docs":  error,
+			"success": false 
+		});
+	}	
 };
 
 	

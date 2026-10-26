@@ -1,23 +1,17 @@
-  const db = require('../../config/connection');
-const Logger = require('../../config/logging.js')
+const {DiscountType}= require('../../models/index');
+const { Op } = require("sequelize");
+const Logger = require('../../config/logging.js');
 
 module.exports = (req, res) => {
-    try {
-             var sqlquery = `SELECT * 
-             			FROM DiscountTypes;`
-
-        
-        db.connection.query(sqlquery, function(err, result) {
-            if (err) {
-                Logger.log(1, err)
-                console.error(err)
-            } else {
-                const docs = result;
-                res.status(200).json({ docs })
-            }
-        })
-    } catch (err) {
+    DiscountType.findAll({    
+        logging: false,    
+        where: req.query
+        //exclude:  [Product] 
+    })
+    .then((discounts) => {
+        res.status(200).json( discounts );
+    })
+    .catch((err) =>{        
         Logger.log(1, err)
-        console.error(err)
-    }
-}; 
+    })
+};

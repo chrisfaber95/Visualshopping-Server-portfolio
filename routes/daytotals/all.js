@@ -1,18 +1,19 @@
-const db = require('../../config/connection');
+const {Daytotals, User}= require('../../models/index');
+const { Op } = require("sequelize");
+const Logger = require('../../config/logging.js');
 
 module.exports = (req, res) => {
-    var sqlquery = "SELECT o.* "
-    sqlquery += "FROM `Order` as o "
-    if (req.params.date) {
-        sqlquery += "where `pickupDate` like '%" + req.params.date + "%' and status != 'pending' "
-        sqlquery += "ORDER BY `pickupTime` ASC; "
-    } else {
-        sqlquery += " where status != 'pending'  ORDER BY `pickupDate` DESC; "
-    }
-    db.connection.query(sqlquery, function(err, result) {
-        if (err) throw err;
-        console.log(result)
-        const docs = result;
-        res.status(200).json({ docs });
+    Daytotals.findAll({     
+        logging: false,    
+        where: req.body,
+        include:{
+            all: true
+        }
+    })
+    .then((totals) => {
+        res.status(200).json( totals );
+    })
+    .catch((err) =>{        
+        Logger.log(1, err)
     })
 };

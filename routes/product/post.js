@@ -1,20 +1,116 @@
-const db = require('../../config/connection');
+const {Product, Productinformation, ProductAdditionInformation}= require('../../models/index');
+const { Op, Sequelize } = require("sequelize");
+const Logger = require('../../config/logging.js');
 
-module.exports = (req, res) => {
-   
-    var sqlquery = "SELECT m.`id` as `mId`, m.`date` as `mDate`, m.`content` as `mContent`, m.`subject` as `mSubject`, "
-    	sqlquery += "mu.`isOpened`, toU.`id` as `toId`, fromU.`id` as `fromId`, toUi.`name` as `toName`, fromUi.`name` as `fromName`, toUi.`Surname` as `toSurname`, fromUi.`Surname` as `fromSurname` "
-        sqlquery += "FROM `bollegraafdb`.`Messages` as m "
-		sqlquery += "JOIN `bollegraafdb`.`Messages_has_Users` as mu ON mu.`Messages_id` = m.`id` "
-		sqlquery += "JOIN `bollegraafdb`.`Users` as toU ON toU.`id` = mu.`Users_id1` "
-		sqlquery += "JOIN `bollegraafdb`.`Users` as fromU ON fromU.`id` = mu.`Users_id_sender` "
-		sqlquery += "JOIN `bollegraafdb`.`Userinfo` as toUi ON toUi.`id` = toU.`Userinfo_id` "
-		sqlquery += "JOIN `bollegraafdb`.`Userinfo` as fromUi ON fromUi.`id` = fromU.`Userinfo_id` "
-		sqlquery += "WHERE toU.`id` = " + req.params.userId +";"
+module.exports = async (req, res) => {
+	try {
+        var products = req.body
+		var exists = await Product.findOne({
+		logging: false,
+		where: {
+			ean: products.ean
+		},
+		paranoid: false,
+		include: [
+			{
+				model: Productinformation,
+				as: 'product_information',
+				required: false,
+				include: [
+					{
+						model: ProductAdditionInformation,
+						as: 'product_additional_information_list',
+						required: false,
+					}
+				]
+			},
+			Product.ProductHasDiscount,
+			Product.Levertijden,
+			Product.Department,
+			Product.ProductVariant,
+		],
+		exclude: [
+			Product.OrderHasProduct,
+			Product.ShoppingListHasProduct,
+			Product.CustomerHasFavorite
+		]
+	})
 
-		db.connection.query(sqlquery, function (err, result){
-		if(err) throw err;
-		const message = result;
-        res.status(200).json({message});
-	})   
+	if(!exists){
+	var prod = await Product.create(products, {
+		logging: false,
+		paranoid: false,
+		fields: [
+			"price",
+			"nix18",
+			"syndyid",
+			"ean"
+		],
+		include: [
+			{
+				model: Productinformation,
+				as: 'product_information',
+				required: false,
+				include: [
+					{
+						model: ProductAdditionInformation,
+						as: 'product_additional_information_list',
+						required: false
+					}
+				]
+			},
+			Product.ProductHasDiscount,
+			Product.Levertijden,
+			Product.Department,
+			Product.ProductVariant,
+		],
+		updateFields: [
+			"price",
+			"nix18",
+			"syndyid",
+			"product_information.title",
+			"product_information.variant",
+			"product_information.ingredients",
+			"product_information.product_additional_information_list.name",
+			"product_information.product_additional_information_list.value"
+		],
+		exclude: [
+			Product.OrderHasProduct,
+			Product.ShoppingListHasProduct,
+			Product.CustomerHasFavorite,
+		]
+	});
+}
+else{
+	exists.price = products.price
+	exists.previous_price = exists.price
+	exists.nix18 = products.nix18
+	exists.department_id = products.department_id
+	exists.product_information.title = products.product_information.title
+	exists.product_information.variant = products.product_information.variant
+	exists.product_information.ingredients = products.product_information.ingredients
+}
+const prod_item = exists || prod
+	const product_information = products.product_information;
+	if(prod_item.product_information.product_additional_information_list.length == 0){
+        if (product_information?.product_additional_information) {
+            const additionalInformationList = product_information.product_additional_information;
+            for (const info of additionalInformationList) {
+				const add = await ProductAdditionInformation.create({
+					name: info.name,
+					type: info.type,
+					value: info.value,
+					product_information_id: prod_item.product_information.id
+				}, { isNewRecord: true });
+            }
+        }
+	}
+
+	Logger.log(2, prod_item.id)
+	res.status(200).json(updated);
+
+    } catch (error) {        
+        Logger.log(1, error)
+		res.status(200).json( {err: error });
+    }
 };
