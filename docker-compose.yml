@@ -33,14 +33,14 @@ services:
       DB_NAME: cooplubbers_test
       TOKEN_KEY: visualshopping-demo-token-key
       CRYPTR_KEY: visualshopping-demo-cryptr-key
-      BASE_URL: http://homelab:8103/
+      BASE_URL: http://homelab:8107/
       # Geen echte Mollie-sleutel: de server start, maar afrekenen geeft een fout. Mail staat uit (geen MAIL_USER).
       MOLLIE_API: test_demo-zonder-betalingen
       MOLLIE_TEST_API: test_demo-zonder-betalingen
     volumes:
       - public:/app/public
     ports:
-      - "100.85.70.34:8102:3001"
+      - "100.85.70.34:8106:3001"
 
 volumes:
   db:
