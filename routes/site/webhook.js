@@ -18,7 +18,7 @@ module.exports = (req, res) => {
 
 	//	})
       } else if (!payment.isOpen()) {
-        // The payment isn't paid and has expired. We can assume it was aborted.
+        // The payment isn't paid and has expired. We can assume it was aborted. 
 		console.log("is not paid")
       }
       res.send(payment.status);

@@ -10,10 +10,7 @@ module.exports = (req, res) => {
             db.connection.query(sqlquery, (err, result) =>{
                 if (err) {
                     Logger.log(1, err)
-                    console.error(err)
                 } else {
-                    console.table(result[0].path)
-                    
                     res.setHeader('content-type', 'image/jpeg');
                     var s = fs.readFileSync(result[0].path);
                     var string = Buffer.from(s).toString('base64')
@@ -23,7 +20,6 @@ module.exports = (req, res) => {
             })
         } catch (err) {
             Logger.log(1, err)
-            console.error(err)
         }
     }
     else{
@@ -32,9 +28,7 @@ module.exports = (req, res) => {
             db.connection.query(sqlquery, (err, result) =>{
                 if (err) {
                     Logger.log(1, err)
-                    console.error(err)
                 } else {
-                    console.table(result)
                     res.send(200, result)
                 }
             })

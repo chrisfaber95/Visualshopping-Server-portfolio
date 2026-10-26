@@ -12,18 +12,23 @@ const log = function(level, data){
 	try{		
 		switch (level){
 			case 1:
-				console.log(level, data)
 				fs.writeFileSync('./logs/LogError.txt', "\n ERROR|" + timestamp +'|'+ data,{flag:'a+'}); 
 				break;
 			case 2:				
 				fs.writeFileSync('./logs/LogInfo.txt', "\n Info|" + timestamp +'|'+ data,{flag:'a+'});
+				break;
+			case 3:				
+				fs.writeFileSync('./logs/LogActies.txt', "\n Info|" + timestamp +'|'+ data,{flag:'a+'});
+				break;
+			case 4:				
+				fs.writeFileSync('./logs/LogNoStamps.txt', "\n Info|" + timestamp +'|'+ data,{flag:'a+'});
 				break;
 			default:
 				break;
 		}
 	}
 	catch(err){
-		console.error(err)
+		log(1, err)
 	}
 }
 
@@ -33,7 +38,7 @@ const setMailOptions = async function(r){
 		return false
 	}
 	catch(err){
-		console.error(err)
+		log(1, err)
 	}
 }
 

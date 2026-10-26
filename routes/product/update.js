@@ -1,19 +1,18 @@
-const db = require('../../config/connection');
+const {Product}= require('../../models/index');
+const { Op } = require("sequelize");
+const Logger = require('../../config/logging.js');
 
 module.exports = (req, res) => {
-    var sqlquery = "UPDATE `Product` SET "
-    sqlquery += "`beschikbaar` = " + req.body.beschikbaar + ", "
-    sqlquery += "`price` = '" + req.body.price + "', "
-    sqlquery += "`end_of_life` = " + req.body.end_of_life + ", "
-    sqlquery += "`stock` = " + req.body.stock + " "
-    sqlquery += "WHERE `ean` = '" + req.body.ean + "'; "
-    db.connection.query(sqlquery, function(err, result) {
-        if (err) throw err;
-        else {
-            if (result != null) {
-                const docs = "product updated";
-                res.status(200).json({ docs });
-            }
-        }
+    let product = req.body
+    Product.update(product,
+    {
+        logging: false, 
+        where: {id: product.id}
     })
-};
+    .then((product) => {
+        res.status(200).json( product );
+    })
+    .catch((err) =>{        
+        Logger.log(1, err)
+    })
+}

@@ -1,80 +1,370 @@
 const nodemailer = require("nodemailer");
 require('dotenv').config();
 const QRCode = require("qrcode");
+const Logger = require('../config/logging.js');
+const templates = require("../config/mailTemplates")
+
+
 
 const pickedTemplate = function(mystr, orderInfo){
 		producten = '<table>'
-		orderInfo.items.forEach(function(slide) {
-			producten += '<tr><td>'+ slide.title + '</td><td>'+ slide.picked + ' X</td></tr>';
-		}); 
-		/*html = 
-		`<div style="width: 80%">\
-			<table>\			
-				<tr style="width: 100%; background-color: orange;">\
-					<td style="width:30%;">\
-						<h2>Coop Lubbers</h2>\
-					</td>\
-					<td style="width:70%;">\
-						<h1 style="color: white">Bestelling betaling</h1>\
-					</td>\
-				</tr>\	
-				<tr style="width: 100%; background-color: white;">\
-					<td style="width: 100%;">\
-						<img style="border-color: red; width: 99%; background-color: white;" src="cid:qrcode@cooplubbers.nl" />\
-					</td>\
-				</tr>\
-				<tr>\
-					<td>\
-						<p>Uw bestelling is ingepakt, deze bestelling bevat de volgende producten</p>\
-					</td>\
-				</tr>\
-			</table>`
-		*/
-		html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="X-UA-Compatible" content="IE=edge"><title></title><style type="text/css">body{margin: 0;padding: 0;}table,td,tr{vertical-align: top;border-collapse: collapse;}*{line-height: inherit;}a[x-apple-data-detectors=true]{color: inherit !important;text-decoration: none !important;}</style><style type="text/css" id="media-query">@media (max-width: 620px){.block-grid,.col{min-width: 320px !important;max-width: 100% !important;display: block !important;}.block-grid{width: 100% !important;}.col{width: 100% !important;}.col_cont{margin: 0 auto;}img.fullwidth,img.fullwidthOnMobile{width: 100% !important;}.no-stack .col{min-width: 0 !important;display: table-cell !important;}.no-stack.two-up .col{width: 50% !important;}.no-stack .col.num2{width: 16.6% !important;}.no-stack .col.num3{width: 25% !important;}.no-stack .col.num4{width: 33% !important;}.no-stack .col.num5{width: 41.6% !important;}.no-stack .col.num6{width: 50% !important;}.no-stack .col.num7{width: 58.3% !important;}.no-stack .col.num8{width: 66.6% !important;}.no-stack .col.num9{width: 75% !important;}.no-stack .col.num10{width: 83.3% !important;}.video-block{max-width: none !important;}.mobile_hide{min-height: 0px;max-height: 0px;max-width: 0px;display: none;overflow: hidden;font-size: 0px;}.desktop_hide{display: block !important;max-height: none !important;}.img-container.big img{width: auto !important;}}</style></head><body class="clean-body" style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; background-color: #ffffff;"><table class="nl-container" style="table-layout: fixed; vertical-align: top; min-width: 320px; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; width: 100%;" cellpadding="0" cellspacing="0" role="presentation" width="100%" bgcolor="#ffffff" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top;" valign="top"><div style="background-color:transparent;"><div class="block-grid " style="min-width: 320px; max-width: 600px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; Margin: 0 auto; background-color: transparent;"><div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><div class="col num12" style="min-width: 320px; max-width: 600px; display: table-cell; vertical-align: top; width: 600px;"><div class="col_cont" style="width:100% !important;"><div style="border-top:0px solid transparent; border-left:0px solid transparent; border-bottom:0px solid transparent; border-right:0px solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0px; padding-left: 0px;"><div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;"><em>Voeg dit emailadres toe aan de lijst met veilige afzenders, om onze e-mails altijd in je inbox te ontvangen.</em></p></div></div><table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top"><table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td></tr></tbody></table></td></tr></tbody></table><table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" valign="top"><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; text-align: center; width: 100%;" width="100%" align="center" valign="top"><h1 style="color:#000000;direction:ltr;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;font-size:23px;font-weight:normal;letter-spacing:normal;line-height:200%;text-align:center;margin-top:0;margin-bottom:0;"><strong>Coop Lubbers</strong></h1></td></tr></table><table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" valign="top"><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; text-align: center; width: 100%;" width="100%" align="center" valign="top"><h2 style="color:#000000;direction:ltr;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;font-size:18px;font-weight:normal;letter-spacing:normal;line-height:150%;text-align:center;margin-top:0;margin-bottom:0;">Bestelling betaling</h2></td></tr></table><table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top"><table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td></tr></tbody></table></td></tr></tbody></table><div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Via de onderstaande link kunt u uw bestelling betalen en vervolgens ophalen vanaf uw gekozen tijd. ${orderInfo.pickupTime}</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">&nbsp;</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;"><a href="${process.env.BASE_URL}paypage/${mystr}">${process.env.BASE_URL}paypage/${mystr}</a></p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;"><br>Laat tijdens het afhalen van uw bestelling de QR code in deze mail scannen.</p></div></div><div class="img-container center autowidth" align="center" style="padding-right: 0px;padding-left: 0px;"><img class="center autowidth" align="center" border="0" src="cid:qrcode@cooplubbers.nl" alt="QRcode" title="QRcode" style="border-color: red; width: 99%; background-color: white; text-decoration: none; -ms-interpolation-mode: bicubic; height: auto; border: 0; width: 260px; max-width: 100%; display: block;" width="260"></div><table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top"><table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td></tr></tbody></table></td></tr></tbody></table><div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Uw bestelling is ingepakt, deze bestelling bevat de volgende producten:</p></div></div><div style="font-size:16px;text-align:center;font-family:Arial, Helvetica Neue, Helvetica, sans-serif"><table><tbody>`
-		html += producten
-		/*html += `<tr style="width: 100%;"><td style="width:30%;"></td><td style="width: 40%;">\
-		<p>Bedrag: ${orderInfo.totalPrice}</p></td><td style="width:30%;"></td></tr>\
-		</table>\
-		<p>Via de onderstaande link kunt u uw bestelling betalen en vervolgens ophalen vanaf uw gekozen tijd.</p>\
-		<p>Laat tijdens het afhalen van uw bestelling de QR code in deze mail scannen.</p>\
-		<a href="${process.env.BASE_URL}paypage/${mystr}">${process.env.BASE_URL}paypage/${mystr}</a></div>`
-		*/
-		html +=`<tr><td><p>Bedrag: € ${orderInfo.totalPrice}</p></td></tr></tbody></table></div></div></div></div></div></div></div><div style="background-color:transparent;"><div class="block-grid two-up" style="min-width: 320px; max-width: 600px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; Margin: 0 auto; background-color: transparent;"><div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><div class="col num6" style="display: table-cell; vertical-align: top; max-width: 320px; min-width: 300px; width: 300px;"><div class="col_cont" style="width:100% !important;"><div style="border-top:0px solid transparent; border-left:0px solid transparent; border-bottom:0px solid transparent; border-right:0px solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0px; padding-left: 0px;"><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="line-height: 1.2; font-size: 12px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; color: #555555; mso-line-height-alt: 14px;"><p style="margin: 0; font-size: 16px; line-height: 1.2; text-align: center; word-break: break-word; mso-line-height-alt: 19px; margin-top: 0; margin-bottom: 0;"><em><strong>Openingstijden</strong></em></p></div></div><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 12px; line-height: 1.2; color: #555555; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 14px;"><ul style="list-style-type: square;"><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">maandag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">dinsdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">woensdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">donderdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">vrijdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">zaterdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">zondag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 12:00–21:00</li></ul></div></div></div></div></div><div class="col num6" style="display: table-cell; vertical-align: top; max-width: 320px; min-width: 300px; width: 300px;"><div class="col_cont" style="width:100% !important;"><div style="border-top:0px solid transparent; border-left:0px solid transparent; border-bottom:0px solid transparent; border-right:0px solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0px; padding-left: 0px;"><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="line-height: 1.2; font-size: 12px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; color: #555555; mso-line-height-alt: 14px;"><p style="margin: 0; font-size: 16px; line-height: 1.2; text-align: center; word-break: break-word; mso-line-height-alt: 19px; margin-top: 0; margin-bottom: 0;"><em><strong>Jouw Coop is in Groningen</strong></em></p></div></div><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="line-height: 1.2; font-size: 12px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; color: #555555; mso-line-height-alt: 14px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Groningen Lubbers</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Paterwoldseweg 68-70</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">9726 BG, GRONINGEN</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">tel. 050-3187200</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Lubbers.Groningen@coop.nl</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">&nbsp;</p></div></div><div class="button-container" align="center" style="padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><a href="https://g.page/CoopLubbers?share" target="_blank" style="-webkit-text-size-adjust: none; text-decoration: none; display: inline-block; color: #000000; background-color: #ffa100; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; width: auto; width: auto; border-top: 1px solid #ffa100; border-right: 1px solid #ffa100; border-bottom: 1px solid #ffa100; border-left: 1px solid #ffa100; padding-top: 5px; padding-bottom: 5px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; text-align: center; mso-border-alt: none; word-break: keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:undefined;"><span style="font-size: 16px; margin: 0; line-height: 2; word-break: break-word; mso-line-height-alt: 32px;">Routebeschrijving</span></span></a></div></div></div></div></div></div></div></td></tr></tbody></table></body></html>`
-		
+		orderInfo.product_list.forEach((slide) => {
+			producten += `
+				<tr>
+					<td>
+						${slide.product.product_information.title} ${slide.product.product_information.variant} 
+					</td>
+					<td>
+						${slide.picked} X
+					</td>
+				</tr>`
+		})
+
+		html = `
+			${templates.header()}
+			${templates.top('Coop Lubbers')}
+			${templates.mailName('Bestelling verwerkt')}
+			${templates.divider()}
+			<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+				<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+		   			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+						Via de onderstaande link kunt u uw bestelling betalen en vervolgens ophalen vanaf uw gekozen tijd. ${orderInfo.pickupTime}
+					</p>
+		   			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+						&nbsp;
+					</p>
+		   			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+						<a href="${process.env.BASE_URL}paypage/${mystr}">
+							${process.env.BASE_URL}paypage/${mystr}
+						</a>
+					</p>
+		   			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+						<br>
+						Laat tijdens het afhalen van uw bestelling de QR code in deze mail scannen.
+					</p>
+				</div>
+	 		</div>
+	 		<div class="img-container center autowidth" align="center" style="padding-right: 0px;padding-left: 0px;"><img class="center autowidth" align="center" border="0" src="cid:qrcode@cooplubbers.nl" alt="QRcode" title="QRcode" style="border-color: red; width: 99%; background-color: white; text-decoration: none; -ms-interpolation-mode: bicubic; height: auto; border: 0; width: 260px; max-width: 100%; display: block;" width="260"></div>
+	 			<table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top">
+					<tbody>
+		   				<tr style="vertical-align: top;" valign="top">
+			  				<td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top">
+				 				<table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top">
+									<tbody>
+					   					<tr style="vertical-align: top;" valign="top">
+						  					<td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td>
+					   					</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+					</tbody>
+	 			</table>
+	 			<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+					<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+		   				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+							Uw bestelling is ingepakt, deze bestelling bevat de volgende producten:
+						</p>
+					</div>
+	 			</div>
+	 			<div style="font-size:16px;text-align:center;font-family:Arial, Helvetica Neue, Helvetica, sans-serif">
+	 				<table>
+	 					<tbody>
+				 			${producten}
+							<tr>
+								<td>
+									<p>Bedrag: € ${orderInfo.finalPrice}</p>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			${templates.footer()}
+		`
 		return html
 }
 
 
 const orderedTemplate = function(orderInfo){
-		//producten = '<table>'
-		//orderInfo.items.forEach(function(slide) {
-		//	producten += '<tr><td>'+ slide.title + '</td><td>'+ slide.picked + ' X</td></tr>';
-		//}); 
-		html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="X-UA-Compatible" content="IE=edge"><title></title><style type="text/css">body{margin: 0;padding: 0;}table,td,tr{vertical-align: top;border-collapse: collapse;}*{line-height: inherit;}a[x-apple-data-detectors=true]{color: inherit !important;text-decoration: none !important;}</style><style type="text/css" id="media-query">@media (max-width: 620px){.block-grid,.col{min-width: 320px !important;max-width: 100% !important;display: block !important;}.block-grid{width: 100% !important;}.col{width: 100% !important;}.col_cont{margin: 0 auto;}img.fullwidth,img.fullwidthOnMobile{width: 100% !important;}.no-stack .col{min-width: 0 !important;display: table-cell !important;}.no-stack.two-up .col{width: 50% !important;}.no-stack .col.num2{width: 16.6% !important;}.no-stack .col.num3{width: 25% !important;}.no-stack .col.num4{width: 33% !important;}.no-stack .col.num5{width: 41.6% !important;}.no-stack .col.num6{width: 50% !important;}.no-stack .col.num7{width: 58.3% !important;}.no-stack .col.num8{width: 66.6% !important;}.no-stack .col.num9{width: 75% !important;}.no-stack .col.num10{width: 83.3% !important;}.video-block{max-width: none !important;}.mobile_hide{min-height: 0px;max-height: 0px;max-width: 0px;display: none;overflow: hidden;font-size: 0px;}.desktop_hide{display: block !important;max-height: none !important;}.img-container.big img{width: auto !important;}}</style></head><body class="clean-body" style="margin: 0; padding: 0; -webkit-text-size-adjust: 100%; background-color: #ffffff;"><table class="nl-container" style="table-layout: fixed; vertical-align: top; min-width: 320px; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; width: 100%;" cellpadding="0" cellspacing="0" role="presentation" width="100%" bgcolor="#ffffff" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top;" valign="top"><div style="background-color:transparent;"><div class="block-grid " style="min-width: 320px; max-width: 600px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; Margin: 0 auto; background-color: transparent;"><div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><div class="col num12" style="min-width: 320px; max-width: 600px; display: table-cell; vertical-align: top; width: 600px;"><div class="col_cont" style="width:100% !important;"><div style="border-top:0px solid transparent; border-left:0px solid transparent; border-bottom:0px solid transparent; border-right:0px solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0px; padding-left: 0px;"><div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;"><em>Voeg dit emailadres toe aan de lijst met veilige afzenders, om onze e-mails altijd in je inbox te ontvangen.</em></p></div></div><table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top"><table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td></tr></tbody></table></td></tr></tbody></table><table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" valign="top"><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; text-align: center; width: 100%;" width="100%" align="center" valign="top"><h1 style="color:#000000;direction:ltr;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;font-size:23px;font-weight:normal;letter-spacing:normal;line-height:200%;text-align:center;margin-top:0;margin-bottom:0;"><strong>Coop Lubbers</strong></h1></td></tr></table><table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" valign="top"><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px; text-align: center; width: 100%;" width="100%" align="center" valign="top"><h2 style="color:#000000;direction:ltr;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;font-size:18px;font-weight:normal;letter-spacing:normal;line-height:150%;text-align:center;margin-top:0;margin-bottom:0;">Bestelbevesting</h2></td></tr></table><table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top"><table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top"><tbody><tr style="vertical-align: top;" valign="top"><td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td></tr></tbody></table></td></tr></tbody></table><div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Uw bestelling is verwerkt en wordt voor u verzameld voor de gekozen afhaaltijd.<br>Wanneer deze verpakt is, krijgt u een vervolg mail met een link en code om de tweede betaling af te ronden.<br>Wanneer een product niet voorraadig blijkt te zijn, wordt deze niet opgenomen in de bestellig.<br>Aanbiedingen worden automatisch verrekend tijdens het inpakproces.</p></div></div></div></div></div></div></div></div><div style="background-color:transparent;"><div class="block-grid two-up" style="min-width: 320px; max-width: 600px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; Margin: 0 auto; background-color: transparent;"><div style="border-collapse: collapse;display: table;width: 100%;background-color:transparent;"><div class="col num6" style="display: table-cell; vertical-align: top; max-width: 320px; min-width: 300px; width: 300px;"><div class="col_cont" style="width:100% !important;"><div style="border-top:0px solid transparent; border-left:0px solid transparent; border-bottom:0px solid transparent; border-right:0px solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0px; padding-left: 0px;"><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="line-height: 1.2; font-size: 12px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; color: #555555; mso-line-height-alt: 14px;"><p style="margin: 0; font-size: 16px; line-height: 1.2; text-align: center; word-break: break-word; mso-line-height-alt: 19px; margin-top: 0; margin-bottom: 0;"><em><strong>Openingstijden</strong></em></p></div></div><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="font-size: 12px; line-height: 1.2; color: #555555; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 14px;"><ul style="list-style-type: square;"><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">maandag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">dinsdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">woensdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">donderdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">vrijdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">zaterdag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 07:00–21:30</li><li style="font-size: 12px; line-height: 1.2; mso-line-height-alt: 14px;">zondag&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 12:00–21:00</li></ul></div></div></div></div></div><div class="col num6" style="display: table-cell; vertical-align: top; max-width: 320px; min-width: 300px; width: 300px;"><div class="col_cont" style="width:100% !important;"><div style="border-top:0px solid transparent; border-left:0px solid transparent; border-bottom:0px solid transparent; border-right:0px solid transparent; padding-top:5px; padding-bottom:5px; padding-right: 0px; padding-left: 0px;"><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="line-height: 1.2; font-size: 12px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; color: #555555; mso-line-height-alt: 14px;"><p style="margin: 0; font-size: 16px; line-height: 1.2; text-align: center; word-break: break-word; mso-line-height-alt: 19px; margin-top: 0; margin-bottom: 0;"><em><strong>Jouw Coop is in Groningen</strong></em></p></div></div><div style="color:#555555;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><div class="txtTinyMce-wrapper" style="line-height: 1.2; font-size: 12px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; color: #555555; mso-line-height-alt: 14px;"><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Groningen Lubbers</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Paterwoldseweg 68-70</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">9726 BG, GRONINGEN</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">tel. 050-3187200</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Lubbers.Groningen@coop.nl</p><p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: left; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">&nbsp;</p></div></div><div class="button-container" align="center" style="padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;"><a href="https://g.page/CoopLubbers?share" target="_blank" style="-webkit-text-size-adjust: none; text-decoration: none; display: inline-block; color: #000000; background-color: #ffa100; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; width: auto; width: auto; border-top: 1px solid #ffa100; border-right: 1px solid #ffa100; border-bottom: 1px solid #ffa100; border-left: 1px solid #ffa100; padding-top: 5px; padding-bottom: 5px; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; text-align: center; mso-border-alt: none; word-break: keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:undefined;"><span style="font-size: 16px; margin: 0; line-height: 2; word-break: break-word; mso-line-height-alt: 32px;">Routebeschrijving</span></span></a></div></div></div></div></div></div></div></td></tr></tbody></table></body></html>`
-		/*`<div style="width: 80%">\
-			<table>\		
-				<tr style="width: 100%; background-color: orange;">\
-					<td style="width:1000%;">\
-						<i>Voeg dit emailadres toe aan de lijst met veilige afzenders, om onze e-mails altijd in je inbox te ontvangen.</i>\
-					</td>\
-				</tr>\			
-				<tr style="width: 100%; background-color: orange;">\
-					<td style="width:30%;">\
-						<h2>Coop Lubbers</h2>\
-					</td>\
-					<td style="width:70%;">\
-						<h1 style="color: white">Bestelbevesting</h1>\
-					</td>\
-				</tr>\	
-				<tr>\
-					<td>\
-						<p>Uw bestelling is verwerkt en wordt voor u verzameld voor de gekozen afhaaltijd.\
-						Wanneer deze verpakt is, krijgt u een vervolg mail met een link en code om de tweede betaling af te ronden.</p>\
-						<p>Wanneer een product niet voorraadig blijkt te zijn, wordt deze niet opgenomen in de bestellig.</p>\
-						<p>Aanbiedingen worden automatisch verrekend tijdens het inpakproces.</p>\
-					</td>\
-				</tr>\
-			</table>`*/
+	producten = '<table>'
+	orderInfo.product_list.forEach((slide) => {
+			producten += `
+			<tr>
+				<td>
+					${slide.product.product_information.title} ${slide.product.product_information.variant} `
+					if(slide.actie_order_product_variant_list){					
+						if(slide.actie_order_product_variant_list.length > 0){
+							for(var i = 0; i < slide.actie_order_product_variant_list.length; i++){
+								producten += `${slide.actie_order_product_variant_list[i].product_variant.variant_label} `
+							}
+						}
+					}
+		producten +=`</td>
+				<td>
+					${slide.amount} X
+				</td>
+			</tr>`
+	})
+	html = `
+		${templates.header()}
+		${templates.top('Coop Lubbers')}
+		${templates.mailName('Bestelling geplaatst')}
+		${templates.divider()}
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;adding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Uw bestelling is verwerkt en wordt voor u verzameld voor de gekozen afhaaltijd.<br>
+					Wanneer deze verpakt is, krijgt u een vervolg mail met een link en code om de tweede betaling af te ronden.<br>
+					Wanneer een product niet voorraadig blijkt te zijn, wordt deze niet opgenomen in de bestelling.<br>
+					Aanbiedingen worden automatisch verrekend tijdens het inpakproces.
+				</p>
+			</div>
+		</div>
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Uw bestelling is ingepakt, deze bestelling bevat de volgende producten:
+				</p>
+			</div>
+		</div>
+		<div style="font-size:16px;text-align:center;font-family:Arial, Helvetica Neue, Helvetica, sans-serif">
+			<table>
+				<tbody>
+					${producten}
+					<tr>
+						<td>`
+							if(!orderInfo.product_list[0].actie_order_product_variant_list){		
+								html += `<p>Bedrag: € ${orderInfo.finalPrice}</p>`
+							}
+						`</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		${templates.footer()}
+	`
+	return html
+}
+
+const actiePickedTemplate = function(mystr, orderInfo){
+	producten = '<table border="1px" cellspacing="2px" width="100%" align="left">'
+	orderInfo.product_list.forEach((slide) => {
+			producten += `
+			<tr>
+				<td>
+					${slide.product.product_information.title} ${slide.product.product_information.variant} `				
+					if(slide.actie_order_product_variant_list.length > 0){
+						for(var i = 0; i < slide.actie_order_product_variant_list.length; i++){
+							producten += `${slide.actie_order_product_variant_list[i].product_variant.variant_label} `
+						}
+					}
+		producten +=`</td>
+				<td>
+					${slide.amount} X
+				</td>
+			</tr>`
+	})
+
+		html = `
+			${templates.header()}
+			${templates.top('Coop Lubbers')}
+			${templates.mailName('Bestelling geplaatst')}
+			${templates.divider()}
+			<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+				<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+		   			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+						Uw bestelling is verwerkt en kan opgehaald worden.
+						<br>
+						Laat tijdens het afhalen van uw bestelling de QR code in deze mail scannen.
+					</p>
+				</div>
+	 		</div>
+	 		<div class="img-container center autowidth" align="center" style="padding-right: 0px;padding-left: 0px;"><img class="center autowidth" align="center" border="0" src="cid:qrcode@cooplubbers.nl" alt="QRcode" title="QRcode" style="border-color: red; width: 99%; background-color: white; text-decoration: none; -ms-interpolation-mode: bicubic; height: auto; border: 0; width: 260px; max-width: 100%; display: block;" width="260"></div>
+	 			<table class="divider" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" role="presentation" valign="top">
+					<tbody>
+		   				<tr style="vertical-align: top;" valign="top">
+			  				<td class="divider_inner" style="word-break: break-word; vertical-align: top; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; padding-top: 10px; padding-right: 10px; padding-bottom: 10px; padding-left: 10px;" valign="top">
+				 				<table class="divider_content" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed; vertical-align: top; border-spacing: 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-top: 1px solid #BBBBBB; width: 100%;" align="center" role="presentation" valign="top">
+									<tbody>
+					   					<tr style="vertical-align: top;" valign="top">
+						  					<td style="word-break: break-word; vertical-align: top; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;" valign="top"><span></span></td>
+					   					</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+					</tbody>
+	 			</table>
+	 			<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+					<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+		   				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+							Uw bestelling is ingepakt, deze bestelling bevat de volgende producten:
+						</p>
+					</div>
+	 			</div>
+	 			<div style="font-size:16px;text-align:center;font-family:Arial, Helvetica Neue, Helvetica, sans-serif">
+	 				<table>
+	 					<tbody>
+				 			${producten}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			${templates.footer()}
+		`
+		return html
+}
+
+const orderedActieTemplate = function(orderInfo){
+	producten = '<table border="1px" cellspacing="2px" width="100%" align="left">'
+	orderInfo.product_list.forEach((slide) => {
+			producten += `
+			<tr>
+				<td>
+					${slide.product.product_information.title} ${slide.product.product_information.variant} `				
+					if(slide.actie_order_product_variant_list.length > 0){
+						for(var i = 0; i < slide.actie_order_product_variant_list.length; i++){
+							producten += `${slide.actie_order_product_variant_list[i].product_variant.variant_label} `
+						}
+					}
+		producten +=`</td>
+				<td>
+					${slide.amount} X
+				</td>
+			</tr>`
+	})
+	html = `
+		${templates.header()}
+		${templates.top('Coop Lubbers')}
+		${templates.mailName('Spaaractie bestelling geplaatst')}
+		${templates.divider()}
+		<div style="
+			color:#393d47;
+			font-family:Arial, Helvetica Neue, Helvetica, sans-serif;
+			line-height:1.2;
+			padding-top:10px;
+			padding-right:10px;
+			padding-bottom:10px;
+			padding-left:10px;">
+			<div class="txtTinyMce-wrapper" 
+				style="font-size: 14px; 
+				line-height: 1.2; 
+				color: #393d47; 
+				font-family: Arial, Helvetica Neue, Helvetica, sans-serif; 
+				mso-line-height-alt: 17px;">
+				<p style="margin: 0; 
+					font-size: 14px; 
+					line-height: 1.2; 
+					word-break: break-word; 
+					mso-line-height-alt: 17px; 
+					margin-top: 0; 
+					margin-bottom: 0;">
+					Uw bestelling is verwerkt en wordt voor u verzameld.<br>
+					Wanneer deze verpakt is, krijgt u een vervolg mail met een code om uw bestelling af te halen.<br>
+					Wanneer een product niet voorraadig blijkt te zijn, wordt deze niet opgenomen in de bestellig.<br>
+					Aanbiedingen worden automatisch verrekend tijdens het inpakproces.
+				</p>
+			</div>
+		</div>
+		<div style="color:#393d47;
+		font-family:Arial, Helvetica Neue, Helvetica, sans-serif;
+		line-height:1.2;
+		padding-top:10px;
+		padding-right:10px;
+		padding-bottom:10px;
+		padding-left:10px;">
+			<div class="txtTinyMce-wrapper" 
+				style="font-size: 14px; 
+				line-height: 1.2; 
+				color: #393d47; 
+				font-family: Arial, Helvetica Neue, Helvetica, sans-serif; 
+				mso-line-height-alt: 17px;">
+				<p style="margin: 0; 
+					font-size: 14px; 
+					line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Uw bestelling wordt verzameld, deze bestelling bevat de volgende producten:
+				</p>
+			</div>
+		</div>
+		<div style="font-size:16px;text-align:center;font-family:Arial, Helvetica Neue, Helvetica, sans-serif">
+			<table>
+				<tbody>
+					${producten}
+				</tbody>
+			</table>
+		</div>
+		${templates.footer()}
+	`
+	return html
+}
+
+const orderedDonarTemplate = function(orderInfo){
+
+	producten = '<table border="1px" cellspacing="2px" width="100%" align="left">'
+	orderInfo.product_list.forEach((slide) => {
+		if(slide.product_id != 28898){
+			producten += `
+			<tr>
+				<td style="padding: 3px">
+					${slide.product.product_information.title} ${slide.product.product_information.variant} `				
+					if(slide.actie_order_product_variant_list.length > 0){
+						for(var i = 0; i < slide.actie_order_product_variant_list.length; i++){
+							producten += `${slide.actie_order_product_variant_list[i].product_variant.variant_label} `
+						}
+					}
+		producten +=`</td>
+				<td style="padding: 3px">
+					${slide.amount} X
+				</td>
+			</tr>`
+		}		
+	})
+
+	html = `
+		${templates.header()}
+		${templates.top('Coop Lubbers Actie Bestelling')}
+		${templates.mailName('Spaaractie bestelling geplaatst')}
+		${templates.divider()}
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;adding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Klantgegevens:<br>
+					Naam: ${orderInfo.actie_order_information.first_name} ${orderInfo.actie_order_information.surname}<br>
+					Email: ${orderInfo.actie_order_information.customerEmail}<br>
+					`
+					if(orderInfo.delivery === true){
+						html += `
+						Adres: ${orderInfo.actie_order_information.street || ''} ${orderInfo.actie_order_information.house_number || ''} ${orderInfo.actie_order_information.house_addition || ''}<br>
+							${orderInfo.actie_order_information.zipcode || ''} ${orderInfo.actie_order_information.city || ''}<br>
+						`
+					}
+					html +=`<br>
+					Besteld op: ${orderInfo.actie_order_information.createdAt.split('T')[0]}
+				</p>
+			</div>
+		</div>
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; text-align: center; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Er is een Donar bestelling gedaan, deze bestelling bevat de volgende producten:
+				</p>
+			</div>
+		</div>
+		<div style="font-size:16px;text-align:center;font-family:Arial, Helvetica Neue, Helvetica, sans-serif">
+			<table>
+				<tbody>
+					${producten}
+					<tr>
+						<td>
+							
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		${templates.footer()}
+	`
 		//html += producten
 		//html += `<tr style="width: 100%;"><td style="width:30%;"></td><td style="width: 40%;">\
 		//<p>Bedrag: ${orderInfo.totalPrice}</p></td><td style="width:30%;"></td></tr>\
@@ -82,20 +372,161 @@ const orderedTemplate = function(orderInfo){
 		
 		return html
 }
-/*
-const transporter = nodemailer.createTransport({
-	service: 'gmail',
-	auth: {
-		user: process.env.MAIL_USER,
-		pass: process.env.MAIL_PASS
-	}
-});
-*/
+
+const accountCreatedTemplate = () => {
+	var html = ""
+	html = `
+		${templates.header()}
+		${templates.top('Coop Lubbers')}
+		${templates.mailName('Account aangemaakt')}
+		${templates.divider()}
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">Bedankt voor het aanmaken van een account bij de webwinkel van Coop Lubbers
+				</p>
+			</div>
+		</div>		
+		${templates.footer()}
+	`
+	//	nog toevoegen				<br>Voor bevestiging van het account en gebruik te maken van de acties gekoppeld aan de applicatie dient u uw account te bevestigen met de onderstaande link.
+	//<br>Als u uw account nog niet had bevestigd, maar wel uw klantenkaart (QR Code) uit de app heeft laten scannen, worden de punten automatisch bijgeschreven
+	return html
+}
+
+const accountForgetTemplate = function(resetcode){
+	var html = ""
+	html = `	
+		${templates.header()}
+		${templates.top('Coop Lubbers')}
+		${templates.mailName('Wachtwoord vergeten')}
+		${templates.divider()}
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Problemen met inloggen?<br>
+					Uw wachtwoord wijzigen is simpel.<br>
+					Klik op de onderstaande knop en volg de instructies.<br/>
+					<a href="${process.env.BASE_URL}resetpassword?resetcode=${resetcode}">
+						<button class="button">Wachtwoord wijzigen</button>
+					</a><br>
+					Kunt u niet op de knop drukken, kunt u ook deze link gebruiken:<br>
+					<a href="${process.env.BASE_URL}resetpassword?resetcode=${resetcode}">${process.env.BASE_URL}resetpassword?resetcode=${resetcode}</a>
+					Als u deze wijziging niet heeft aangevraagd, kunt u deze email negeren.
+				</p>
+			</div>
+		</div>											
+		${templates.footer()}
+	`
+	
+	return html
+}
+
+const feedbackTemplate = function(resetcode){
+	var html = ""
+	html = `	
+		${templates.header()}
+		${templates.top('Coop Lubbers')}
+		${templates.mailName('Feeback')}
+		${templates.divider()}
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+				<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+					Feedback<br>
+					${resetcode}">
+				</p>
+			</div>
+		</div>											
+		${templates.footer()}
+	`
+	
+	return html
+}
+
+const actieReminderTemplate = (info) => {
+	console.log(info)
+	var html = ""
+	html = `
+		${templates.header()}
+		${templates.top('Coop Lubbers')}
+		${templates.mailName('Coop Lubbers Donar spaaractie!')}
+		<table width="100%" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td align="center">
+					<img src="cid:donar_zegel@cooplubbers.nl" style="max-width: 300px; height: auto; margin-left: auto; margin-right: auto;" alt="donar_zegel">
+				</td>
+			</tr>
+		</table>
+		${templates.divider()}
+		<div style="color:#393d47;font-family:Arial, Helvetica Neue, Helvetica, sans-serif;line-height:1.2;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">
+			<div class="txtTinyMce-wrapper" style="font-size: 14px; line-height: 1.2; color: #393d47; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; mso-line-height-alt: 17px;">
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Beste Coop Lubbers klant,</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Wij hebben fantastisch nieuws voor alle Donar fans! 
+			Coop Lubbers de spectaculaire Donar merchandise en tickets spaaractie update:</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Ontdek de opwindende wereld van Basketball club Donar Groningen en 
+			spaar GRATIS geweldige fan artikelen uit onze fanshop, evenals tickets voor opwindende wedstrijden!</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Begin met sparen of wissel je zegels in op onze spaaractie pagina <a href="https://www.cooplubbers.nl/spaaracties">https://www.cooplubbers.nl/spaaracties</a>. 
+			En weet je wat het nog beter maakt? 
+			Je kunt je Coop Lubbers munten inwisselen voor extra zegels, 
+			zodat je nog sneller kunt sparen en de meest geweldige artikelen binnen handbereik liggen.</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Hier is een overzicht van je huidige aantal zegels:</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Aantal zegels:<b>${info.spaaractie_list[0].stamp_amount}</b></p><br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Aantal munten:<b>${info.storepoints}</b></p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Bestel nu direct via: <a href="https://www.cooplubbers.nl/actieshop/donar">https://www.cooplubbers.nl/actieshop/donar</a></p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Ontdek een scala aan maar liefst 20 fantastische fanartikelen, 
+			waaronder basketballen, caps, shirts, badhanddoeken, bobbleheads en nog veel meer. 
+			Maar wees er snel bij, want het is zolang de voorraad strekt.</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Als kers op de taart bieden wij je de kans om GRATIS naar een van de wedstrijden van Donar in Martiniplaza te gaan. 
+			Een onvergetelijke belevenis voor het hele gezin, 
+			waarbij je volledig wordt ondergedompeld in de wereld van Basketball. 
+			Mis deze spannende en leuke ervaring absoluut niet!</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			En er is meer goed nieuws: je kunt nog steeds blijven sparen en inwisselen! 
+			Let op, voor deze actie gelden actievoorwaarden. 
+			Je vindt ze hieronder bij de Donar spaaracties: <a href="https://www.cooplubbers.nl/spaaracties">https://www.cooplubbers.nl/spaaracties</a></p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Je ontvangt deze e-mail omdat je deelnemer bent aan de Donar spaaractie van Coop Lubbers. 
+			Wil je liever geen e-mails meer ontvangen? Meld je dan af via een reply.</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			We hopen je snel te zien bij Coop Lubbers, waar we samen met jou de passie voor Donar Basketball vieren!</p><br/>
+			<br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Met vriendelijke groet,</p><br/>
+			<p style="margin: 0; font-size: 14px; line-height: 1.2; word-break: break-word; mso-line-height-alt: 17px; margin-top: 0; margin-bottom: 0;">
+			Het Coop Lubbers Team</p>
+			</div>			
+			<img src="cid:storefront@cooplubbers.nl" style="width: 100%; height: auto;" alt="storefront">
+		</div>		
+		${templates.footer()}
+	`
+	//	nog toevoegen				<br>Voor bevestiging van het account en gebruik te maken van de acties gekoppeld aan de applicatie dient u uw account te bevestigen met de onderstaande link.
+	//<br>Als u uw account nog niet had bevestigd, maar wel uw klantenkaart (QR Code) uit de app heeft laten scannen, worden de punten automatisch bijgeschreven
+	return html
+}
 
 const transporter = nodemailer.createTransport({
 	host: "smtp.hostnet.nl",
 	port: "587",
-	//service: 'gmail',
 	auth: {
 		user: process.env.MAIL_USER,
 		pass: process.env.MAIL_PASS
@@ -131,8 +562,8 @@ const setMailOptions = async function(email1, html1, mystr){
 		};
 		return mailOptions
 	}
-	catch(err){
-		console.error(err)
+	catch(err){ 
+		Logger.log(1, err)
 	}
 }
 
@@ -152,15 +583,95 @@ const setOrderMailOptions = async function(email1, html1){
 		};
 		return mailOptions
 	}
-	catch(err){
-		console.error(err)
+	catch(err){ 
+		Logger.log(1, err)
+	}
+}
+const setPasswordResetMailOptions = async function(email1, html1){
+	const email = email1
+	const html = html1
+	try{
+		let mailOptions = {
+			from: 'Coop Lubbers Accounts <bestellingen@cooplubbers.nl>', // sender address
+			to: email, // list of receivers
+			subject: "Wachtwoord vergeten Coop Lubbers", // Subject line
+			text: "Wachtwoord vergeten Coop Lubbers", // plain text body
+			html: html,  // html body
+			attachments: [
+			],
+
+		};
+		return mailOptions
+	}
+	catch(err){ 
+		Logger.log(1, err)
+	}
+}
+
+const setFeedbackMailOptions = async function(email1, email2, html1){
+	const email = email1
+	const mail2 = email2
+	const html = html1
+	try{
+		let mailOptions = {
+			from: 'Coop Lubbers Feedback <bestellingen@cooplubbers.nl>', // sender address
+			to: email, // list of receivers
+			subject: "Feedback Coop Lubbers", // Subject line
+			text: "Feedback Coop Lubbers", // plain text body
+			html: html,  // html body
+			attachments: [
+			],
+
+		};
+		return mailOptions
+	}
+	catch(err){ 
+		Logger.log(1, err)
+	}
+}
+
+const setActieReminderOptions = async function(email1, html1){
+	const email = email1
+	const html = html1
+	try{
+		let mailOptions = {
+			from: 'Coop Lubbers Feedback <bestellingen@cooplubbers.nl>', // sender address
+			to: email, // list of receivers
+			subject: "Spaaracties Coop Lubbers", // Subject line
+			text: "Spaaracties Coop Lubbers", // plain text body
+			html: html,  // html body
+			attachments: [{
+				filename: 'storefront.jpg', // The name you want to give to the image
+				path: 'https://www.cooplubbers.nl/img/background-opening.jpg', // URL link to the image
+				cid: 'storefront@cooplubbers.nl' //same cid value as in the html img src
+			},{
+				filename: 'donar_zegel.png', // The name you want to give to the image
+				path: 'https://www.cooplubbers.nl/img/acties/main_donar.png', // URL link to the image
+				cid: 'donar_zegel@cooplubbers.nl' //same cid value as in the html img src
+			},]
+
+		};
+		return mailOptions
+	}
+	catch(err){ 
+		Logger.log(1, err)
 	}
 }
 
 module.exports = {
     setMailOptions: setMailOptions,
     setOrderMailOptions: setOrderMailOptions,
+    setPasswordResetMailOptions: setPasswordResetMailOptions,
 	pickedTemplate: pickedTemplate,
 	orderedTemplate: orderedTemplate,
+	accountCreatedTemplate: accountCreatedTemplate,
+	accountForgetTemplate: accountForgetTemplate,
+	orderedActieTemplate: orderedActieTemplate,
+	actiePickedTemplate: actiePickedTemplate,
+	orderedDonarTemplate: orderedDonarTemplate,
+	setFeedbackMailOptions: setFeedbackMailOptions,
+	feedbackTemplate: feedbackTemplate,
+	actieReminderTemplate: actieReminderTemplate,
+	setActieReminderOptions: setActieReminderOptions,
 	transporter: transporter
 };

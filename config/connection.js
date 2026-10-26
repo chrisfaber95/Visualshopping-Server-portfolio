@@ -1,23 +1,39 @@
 const mysql = require('mysql');
+var Sequelize = require("sequelize");
+const Logger = require('../config/logging.js')
 require('dotenv').config();
 
-const connection = mysql.createPool({
-	host: process.env.DB_HOST,
-	user: process.env.DB_USER,
-	password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-	multipleStatements: true,
-    insecureAuth : true
-})
-/*
-server password: f3aKLoHK
-server root password: f8bKLoHK
+var sequelize = new Sequelize(
+	process.env.DB_NAME, 
+	process.env.DB_USER, 
+	process.env.DB_PASS, {
+		host: process.env.DB_HOST,
+		dialect: 'mysql',
+		timezone: '+01:00',
+		pool: {
+		max: 150,
+		min: 0,
+		idle: 5000
+		},
+		logging: msg => Logger.log(2, msg)
+	});
 
-connection.connect(function(err){
-	if (err) throw err;
-	console.log("connected to Database");
-});
-*/
+
+var sequelize_v1 = new Sequelize(
+	"shops", 
+	process.env.DB_USER, 
+	process.env.DB_PASS, {
+		host: process.env.DB_HOST,
+		dialect: 'mysql',
+		timezone: '+01:00',
+		pool: {
+		max: 150,
+		min: 0,
+		idle: 5000
+		},
+		logging: msg => Logger.log(2, msg)
+	});
+
 module.exports = {
-    connection: connection
+    connection: sequelize
 };

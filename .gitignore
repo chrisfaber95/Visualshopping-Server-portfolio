@@ -34,3 +34,7 @@ dist/
 logs/*
 !logs/.gitkeep
 Database/Dump*.sql
+
+# Uploads, productafbeeldingen en tijdelijke bestanden
+public/
+temp/

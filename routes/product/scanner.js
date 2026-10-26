@@ -35,7 +35,6 @@ module.exports = (req, res) => {
 				.then(function(html){
 					var	title= $('.crumbs li a span',html)[length -1].children[0].data
 					var length = $('.crumbs li a span',html).length;
-						console.log($('.crumbs li a span',html)[length -1].children[0].data);	
 					var	url2= url1
 					var	categoryname1= $('.crumbs li a span',html)[2].children[0].data
 					var	categoryname2= $('.crumbs li a span',html)[3].children[0].data
@@ -52,7 +51,6 @@ module.exports = (req, res) => {
 					var	schapplaats= req.body.schapplaats
 					var beschikbaar= req.body.aantal
 					var schapcode= req.body.schapcode
-						console.log(beschikbaar)
 					var slug = ($('.crumbs li a span',html)[2].children[0].data).replace(/\s+/g, '-').toLowerCase() + '/' + ($('.crumbs li a span',html)[3].children[0].data).replace(/\s+/g, '-').toLowerCase();
 
 
@@ -84,7 +82,6 @@ router.get('/api/coopextra', (req, res) => {
 		productlinks.find({}, function (err, docs){
 			//for(x = 0; x < docs.length; x++){				
 			for(x = 0; x < 1700; x++){
-				//console.log(docs[x].url);
 				searchProduct(docs[x].url);
 			}
 		});
@@ -99,8 +96,7 @@ const  searchProduct  = (url, cb) => {
 	rp(url)
 		.then(function(html){
 				
-			var length = $('.crumbs li a span',html).length;
-		//	console.log($('.crumbs li a span',html)[length -1].children[0].data);			
+			var length = $('.crumbs li a span',html).length;		
 			const doc = { 	
 				url: url,
 				title: $('.crumbs li a span',html)[length -1].children[0].data,
@@ -129,15 +125,12 @@ const  searchProduct  = (url, cb) => {
 						sec_label: ($('.crumbs li a span',html)[3].children[0].data),
 						slug: slug
 					}
-					console.log(doc1);
 					coopdepartmentsdb.insert(doc1, function (err, newDoc) { 	// Callback is optional
 					});
 				}
 			})
 			coopproductdb.insert(doc, function (err, newDoc) { 	// Callback is optional
-				console.log(url );
 			});
-	//		console.log($('#main > section', html));
 		})		
 	  .catch(function(err){
 		//handle error
@@ -154,8 +147,7 @@ function searchProduct (url){
 	rp(url)
 		.then(function(html){
 				
-			var length = $('.crumbs li a span',html).length;
-		//	console.log($('.crumbs li a span',html)[length -1].children[0].data);			
+			var length = $('.crumbs li a span',html).length;		
 			const doc = { 	
 				url: url,
 				title: he.encode($('.crumbs li a span',html)[length -1].children[0].data),
