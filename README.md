@@ -21,6 +21,7 @@ veranderen in `"127.0.0.1:8106:3001"`.
 | `01_schema_cooplubbers_test.sql`, `02_schema_shops.sql` | structuur van beide databases, zonder data |
 | `03_grants.sql` | rechten van de app-gebruiker op `shops` |
 | `04_productdata.sql`, `05_shopsdata.sql` | productcatalogus, afdelingen en winkelinformatie (geen klant-, order- of medewerkergegevens) |
+| `06_demo.sql` | een demo-werknemer (`demo@example.com` / `demo1234`, rol Admin) en het logo uit de eigen volume |
 
 De scripts draaien alleen bij een lege volume. Opnieuw opbouwen: `docker compose down`, de volume `<project>_db` verwijderen en weer `up` (niet `down -v`: dat wist ook de volume `public` met foto's en uploads).
 
