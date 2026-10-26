@@ -10,21 +10,16 @@ services:
       MYSQL_PASSWORD: visualshopping-demo
     volumes:
       - db:/var/lib/mysql
-      # Draait alleen bij een lege volume; opnieuw opbouwen: docker compose down -v
+      # Draait alleen bij een lege volume; opnieuw opbouwen: down, docker volume rm <project>_db, up (niet down -v: dat wist ook de foto's)
       - ./db:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uvisualshopping", "-pvisualshopping-demo"]
-      interval: 5s
-      timeout: 5s
-      retries: 60
-      start_period: 300s
 
   api:
     build: .
     restart: unless-stopped
+    # Niet wachten tot de database gezond is: de eerste import duurt langer dan de 120 s die homelab-deploy op
+    # `compose up --wait` wacht. Sequelize verbindt pas bij een verzoek; tijdens de import geven die een fout.
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     environment:
       PORT: "3001"
       DB_HOST: db

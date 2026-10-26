@@ -22,7 +22,7 @@ veranderen in `"127.0.0.1:8106:3001"`.
 | `03_grants.sql` | rechten van de app-gebruiker op `shops` |
 | `04_productdata.sql`, `05_shopsdata.sql` | productcatalogus, afdelingen en winkelinformatie (geen klant-, order- of medewerkergegevens) |
 
-De scripts draaien alleen bij een lege volume. Opnieuw opbouwen: `docker compose down -v` en weer `up`.
+De scripts draaien alleen bij een lege volume. Opnieuw opbouwen: `docker compose down`, de volume `<project>_db` verwijderen en weer `up` (niet `down -v`: dat wist ook de volume `public` met foto's en uploads).
 
 ## Demo
 
