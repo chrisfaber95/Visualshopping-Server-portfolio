@@ -43,7 +43,7 @@ DELETE FROM `Folder_Pages`;
 -- Information
 DELETE FROM `Information`;
 /*!40000 ALTER TABLE `Information` DISABLE KEYS */;
-INSERT INTO `Information` VALUES ('6340537e-6744-11ed-b67e-0242ac110003','Coop Lubbers',1,'050-3187200','Lubbers.groningen@coop.nl','02060604','NL000000000B00',NULL,'administratie@cooplubbers.nl',NULL,'https://www.cooplubbers.nl/api/back-images/store_images/COOP-5355/logo_factuur.png');
+INSERT INTO `Information` VALUES ('6340537e-6744-11ed-b67e-0242ac110003','Coop Lubbers',1,'050-3187200','Lubbers.groningen@coop.nl','02060604','NL000000000B00',NULL,'administratie@cooplubbers.nl',NULL,'/api/back-images/store_images/COOP-5355/logo_factuur.png');
 /*!40000 ALTER TABLE `Information` ENABLE KEYS */;
 
 -- Job_Offer
