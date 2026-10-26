@@ -1,0 +1,47 @@
+# Demo met de productcatalogus (db/), zonder Mollie en mail. Alleen bereikbaar via Tailscale.
+services:
+  db:
+    image: mysql:8.0.41
+    restart: unless-stopped
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: cooplubbers_test
+      MYSQL_USER: visualshopping
+      MYSQL_PASSWORD: visualshopping-demo
+    volumes:
+      - db:/var/lib/mysql
+      # Draait alleen bij een lege volume; opnieuw opbouwen: docker compose down -v
+      - ./db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uvisualshopping", "-pvisualshopping-demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 300s
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: "3001"
+      DB_HOST: db
+      DB_USER: visualshopping
+      DB_PASS: visualshopping-demo
+      DB_NAME: cooplubbers_test
+      TOKEN_KEY: visualshopping-demo-token-key
+      CRYPTR_KEY: visualshopping-demo-cryptr-key
+      BASE_URL: http://homelab:8103/
+      # Geen echte Mollie-sleutel: de server start, maar afrekenen geeft een fout. Mail staat uit (geen MAIL_USER).
+      MOLLIE_API: test_demo-zonder-betalingen
+      MOLLIE_TEST_API: test_demo-zonder-betalingen
+    volumes:
+      - public:/app/public
+    ports:
+      - "100.85.70.34:8102:3001"
+
+volumes:
+  db:
+  public:
